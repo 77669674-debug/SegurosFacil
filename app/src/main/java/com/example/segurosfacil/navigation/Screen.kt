@@ -9,8 +9,11 @@ sealed class Screen(val route: String) {
     object MisPolizas : Screen("mis_polizas")
 
     object ReportarSiniestro : Screen("reportar_siniestro")
+
     object DetallePlan : Screen("detalle_plan/{planId}?yaContratado={yaContratado}") {
         fun crearRuta(planId: String, yaContratado: Boolean = false) =
             "detalle_plan/$planId?yaContratado=$yaContratado"
     }
+
+    object Sincronizacion : Screen("sincronizacion")
 }

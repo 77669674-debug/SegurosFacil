@@ -22,7 +22,7 @@ import com.example.segurosfacil.ui.screens.polizas.MisPolizasScreen
 import com.example.segurosfacil.ui.screens.siniestro.ReportarSiniestroScreen
 import kotlinx.coroutines.flow.first
 import androidx.compose.runtime.getValue
-
+import androidx.compose.material.icons.filled.Refresh
 private val rutasConBarra = listOf(
     Screen.Home.route,
     Screen.Cotizador.route,
@@ -66,6 +66,13 @@ fun NavGraph() {
                         icon = { Icon(Icons.Filled.Warning, contentDescription = "Siniestro") },
                         label = { Text("Siniestro") }
                     )
+
+                    NavigationBarItem(
+                        selected = rutaActual == Screen.Sincronizacion.route,
+                        onClick = { navController.navigate(Screen.Sincronizacion.route) },
+                        icon = { Icon(Icons.Filled.Refresh, contentDescription = "Sincronizar") },
+                        label = { Text("Sync") }
+                    )
                 }
             }
         }
@@ -77,6 +84,15 @@ fun NavGraph() {
         ) {
             composable(Screen.Cargando.route) {
                 androidx.compose.runtime.LaunchedEffect(Unit) {
+                    com.example.segurosfacil.data.repository.PlanRepository.init(context)
+                    com.example.segurosfacil.data.repository.SyncScheduler.programarSincronizacionAutomatica(context)
+                    try {
+                        com.example.segurosfacil.data.repository.PlanRepository.sincronizarDesdeApi()
+                    } catch (e: Exception) {
+                        android.util.Log.e("SYNC_ERROR", "Tipo: ${e::class.java.simpleName} - Mensaje: ${e.message}")
+                        e.printStackTrace()
+                        com.example.segurosfacil.data.repository.PlanRepository.cargarDesdeRoom()
+                    }
                     val usuarioId = SessionManager.obtenerUsuarioId(context).first()
                     val destino = if (usuarioId != null) Screen.Home.route else Screen.Login.route
                     navController.navigate(destino) {
@@ -117,6 +133,11 @@ fun NavGraph() {
             composable(Screen.ReportarSiniestro.route) {
                 ReportarSiniestroScreen()
             }
+
+            composable(Screen.Sincronizacion.route) {
+                com.example.segurosfacil.ui.screens.sincronizacion.SyncStatusScreen()
+            }
+
             composable(
                 Screen.DetallePlan.route,
                 arguments = listOf(

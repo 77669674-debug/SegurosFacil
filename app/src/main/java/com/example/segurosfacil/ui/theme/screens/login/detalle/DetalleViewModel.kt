@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import com.example.segurosfacil.data.repository.SyncRepository
+
 
 class DetalleViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -20,8 +22,7 @@ class DetalleViewModel(application: Application) : AndroidViewModel(application)
 
     fun contratar(planId: String) {
         viewModelScope.launch {
-            val usuarioId = SessionManager.obtenerUsuarioId(getApplication()).first()
-            if (usuarioId == null) return@launch
+            val usuarioId = SessionManager.obtenerUsuarioId(getApplication()).first() ?: return@launch
 
             polizaDao.insertar(
                 PolizaContratadaEntity(
@@ -30,6 +31,13 @@ class DetalleViewModel(application: Application) : AndroidViewModel(application)
                     fechaContratacion = System.currentTimeMillis()
                 )
             )
+
+            SyncRepository(getApplication()).encolarPoliza(
+                usuarioId = usuarioId,
+                planId = planId.toInt(),
+                estado = "activa"
+            )
+
             _contratacionExitosa.value = true
         }
     }
